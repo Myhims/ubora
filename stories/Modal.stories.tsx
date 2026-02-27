@@ -39,6 +39,9 @@ export const MyComponent = () => {
       },
       language: 'tsx',
     },
+    story: {
+      height: '400px'
+    }
   }
 };
 
@@ -56,7 +59,7 @@ const SampleNode = () => {
       <Modal.Header>My awesome modal</Modal.Header>
       <Modal.Body>
         <img src="https://uneimage.fr/photos/jeunes_panthere_des_neiges_.JPG" width="400"
-        style={{float: 'right', padding: '0 0 2em 2em'}}></img>Lorem ipsum dolor sit amet, consectetur adipiscing elit,<br />
+          style={{ float: 'right', padding: '0 0 2em 2em' }}></img>Lorem ipsum dolor sit amet, consectetur adipiscing elit,<br />
         sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.<br /><br />
         Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.<br />
         Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. <br /><br />
@@ -71,7 +74,7 @@ const SampleNode = () => {
         Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam,<br />
         nisi ut aliquid ex ea commodi consequatur?<br />
         Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur,<br />
-        vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?<br/><br/>
+        vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?<br /><br />
         Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. <br /><br />
         Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.<br /><br />
         Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium,<br />
@@ -82,7 +85,7 @@ const SampleNode = () => {
         consectetur, adipisci velit, <br />
       </Modal.Body>
       <Modal.Footer>
-        <i style={{display: 'flex', justifyContent: 'end'}}>My custom footer</i>
+        <i style={{ display: 'flex', justifyContent: 'end' }}>My custom footer</i>
       </Modal.Footer>
     </Modal>
   </>
@@ -99,7 +102,7 @@ const SlidingNode = () => {
       <Modal.Header>My awesome modal</Modal.Header>
       <Modal.Body>
         <img src="https://uneimage.fr/photos/jeunes_panthere_des_neiges_.JPG" width="400"
-        style={{float: 'right', padding: '0 0 2em 2em'}}></img>Lorem ipsum dolor sit amet, consectetur adipiscing elit,<br />
+          style={{ float: 'right', padding: '0 0 2em 2em' }}></img>Lorem ipsum dolor sit amet, consectetur adipiscing elit,<br />
         sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.<br /><br />
         Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.<br />
         Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. <br /><br />
@@ -114,7 +117,7 @@ const SlidingNode = () => {
         Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam,<br />
         nisi ut aliquid ex ea commodi consequatur?<br />
         Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur,<br />
-        vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?<br/><br/>
+        vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?<br /><br />
         Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. <br /><br />
         Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.<br /><br />
         Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium,<br />
@@ -125,7 +128,7 @@ const SlidingNode = () => {
         consectetur, adipisci velit, <br />
       </Modal.Body>
       <Modal.Footer>
-        <i style={{display: 'flex', justifyContent: 'end'}}>My custom footer</i>
+        <i style={{ display: 'flex', justifyContent: 'end' }}>My custom footer</i>
       </Modal.Footer>
     </Modal>
   </>
@@ -142,7 +145,7 @@ const FullNode = () => {
       <Modal.Header>My awesome modal</Modal.Header>
       <Modal.Body>
         <img src="https://uneimage.fr/photos/jeunes_panthere_des_neiges_.JPG" width="400"
-        style={{float: 'right', padding: '0 0 2em 2em'}}></img>Lorem ipsum dolor sit amet, consectetur adipiscing elit,<br />
+          style={{ float: 'right', padding: '0 0 2em 2em' }}></img>Lorem ipsum dolor sit amet, consectetur adipiscing elit,<br />
         sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.<br /><br />
         Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.<br />
         Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. <br /><br />
@@ -154,7 +157,7 @@ const FullNode = () => {
         Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet,<br />
       </Modal.Body>
       <Modal.Footer>
-        <i style={{display: 'flex', justifyContent: 'end'}}>My custom footer</i>
+        <i style={{ display: 'flex', justifyContent: 'end' }}>My custom footer</i>
       </Modal.Footer>
     </Modal>
   </>

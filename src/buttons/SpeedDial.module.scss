@@ -1,0 +1,156 @@
+.speed-dial {
+    position: relative;
+    cursor: pointer;
+
+    &__bubble-button {
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+        border-radius: 100px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        aspect-ratio: 1;
+
+        &--variant {
+            &-outline {
+                border: 2px solid rgb(var(--uib-color-primary));
+                background: rgba(var(--uib-color-primary), .05);
+                color: rgb(var(--uib-color-primary));
+                fill: rgb(var(--uib-color-primary));
+            }
+
+            &-contained {
+                border: 2px solid rgb(var(--uib-color-primary));
+                background: rgb(var(--uib-color-primary));
+                color: rgb(var(--uib-color-primary-foreground));
+                fill: rgb(var(--uib-color-primary-foreground));
+            }
+        }
+
+        &--size-sm {
+            min-height: 36px;
+            max-height: 36px;
+            min-width: 36px;
+            max-width: 36px;
+
+        }
+
+        &--size-md {
+            min-height: 48px;
+            max-height: 48px;
+            min-width: 48px;
+            max-width: 48px;
+
+        }
+
+        &--size-lg {
+            min-height: 64px;
+            max-height: 64px;
+            min-width: 64px;
+            max-width: 64px;
+        }
+    }
+
+    &__poper {
+        position: absolute;
+        gap: 1em;
+        display: flex;
+        opacity: 0;
+        pointer-events: none;
+
+        &--open {
+            pointer-events: all;
+            opacity: 1;
+            animation: .2s ease-out 0s fab-rail-open;
+        }
+
+        &--closed {
+            animation: .2s ease-out 0s fab-rail-close;
+        }
+
+        &--move-up {
+            flex-direction: column-reverse;
+            bottom: calc(1em + 100%);
+        }
+
+        &--move-down {
+            flex-direction: column;
+            top: calc(1em + 100%);
+        }
+    }
+}
+
+@keyframes fab-rail-open {
+    0% {
+        gap: 0;
+        opacity: 0;
+    }
+
+    100% {
+        gap: 1em;
+        opacity: 1;
+    }
+}
+
+@keyframes fab-rail-close {
+    0% {
+        gap: 1em;
+        opacity: 1;
+    }
+
+    100% {
+        gap: 0;
+        opacity: 0;
+    }
+}
+
+
+.speed-dial-bubble {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+    border-radius: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    gap: 1em;
+    aspect-ratio: 1;
+    transition: all .2s;
+
+    &--variant {
+        &-outline {
+            border: 2px solid rgb(var(--uib-color-primary));
+            background: rgba(var(--uib-color-primary), .05);
+            color: rgb(var(--uib-color-primary));
+            fill: rgb(var(--uib-color-primary));
+        }
+
+        &-contained {
+            border: 2px solid rgb(var(--uib-color-primary));
+            background: rgb(var(--uib-color-primary));
+            color: rgb(var(--uib-color-primary-foreground));
+            fill: rgb(var(--uib-color-primary-foreground));
+        }
+    }
+
+    &--size-sm {
+        min-height: 36px;
+        max-height: 36px;
+        min-width: 36px;
+        max-width: 36px;
+
+    }
+
+    &--size-md {
+        min-height: 48px;
+        max-height: 48px;
+        min-width: 48px;
+        max-width: 48px;
+
+    }
+
+    &--size-lg {
+        min-height: 64px;
+        max-height: 64px;
+        min-width: 64px;
+        max-width: 64px;
+    }
+}
