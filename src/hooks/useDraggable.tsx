@@ -106,6 +106,7 @@ const useDraggable = <T extends HTMLElement>({
             top: pos.y,
             cursor: dragging ? "grabbing" : canDrag ? "grab" : "",
             touchAction: "none",
+            userSelect: 'none'
         }
         : {
             touchAction: "none",
