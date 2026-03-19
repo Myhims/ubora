@@ -1,0 +1,37 @@
+.fun-bubble {
+    --fun-bubble-color: rgb(var(--uib-color-primary));
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--uib-font-family);
+    clip-path: polygon(0px 32px, .078px 20.2712px, .3127px 16.0785px, .7058px 13.0122px, 1.2605px 10.5458px, 1.9817px 8.4842px, 2.8766px 6.7314px, 3.9554px 5.233px, 5.233px 3.9554px, 6.7314px 2.8766px, 8.4842px 1.9817px, 10.5458px 1.2605px, 13.0122px .7058px, 16.0785px .3127px, 20.2712px .078px, 32px 0px, calc(100% - 32px) 0px, calc(100% - 19.9074px) .0896px, calc(100% - 15.5906px) .3591px, calc(100% - 12.4422px) .8109px, calc(100% - 9.9208px) 1.4493px, calc(100% - 7.8262px) 2.2809px, calc(100% - 6.0604px) 3.3157px, calc(100% - 4.5682px) 4.5682px, calc(100% - 3.3157px) 6.0604px, calc(100% - 2.2809px) 7.8262px, calc(100% - 1.4493px) 9.9208px, calc(100% - .8109px) 12.4422px, calc(100% - .3591px) 15.5906px, calc(100% - .0896px) 19.9074px, 100% 32px, 100% calc(100% - 32px), calc(100% - .0896px) calc(100% - 19.9074px), calc(100% - .3591px) calc(100% - 15.5906px), calc(100% - .8109px) calc(100% - 12.4422px), calc(100% - 1.4493px) calc(100% - 9.9208px), calc(100% - 2.2809px) calc(100% - 7.8262px), calc(100% - 3.3157px) calc(100% - 6.0604px), calc(100% - 4.5682px) calc(100% - 4.5682px), calc(100% - 6.0604px) calc(100% - 3.3157px), calc(100% - 7.8262px) calc(100% - 2.2809px), calc(100% - 9.9208px) calc(100% - 1.4493px), calc(100% - 12.4422px) calc(100% - .8109px), calc(100% - 15.5906px) calc(100% - .3591px), calc(100% - 19.9074px) calc(100% - .0896px), calc(100% - 32px) 100%, 32px 100%, 19.9074px calc(100% - .0896px), 15.5906px calc(100% - .3591px), 12.4422px calc(100% - .8109px), 9.9208px calc(100% - 1.4493px), 7.8262px calc(100% - 2.2809px), 6.0604px calc(100% - 3.3157px), 4.5682px calc(100% - 4.5682px), 3.3157px calc(100% - 6.0604px), 2.2809px calc(100% - 7.8262px), 1.4493px calc(100% - 9.9208px), .8109px calc(100% - 12.4422px), .3591px calc(100% - 15.5906px), .0896px calc(100% - 19.9074px), 0px calc(100% - 32px), 0px calc(100% - 32px), 0px calc(92.3077% - 27.0769px), 0px calc(84.6154% - 22.1538px), 0px calc(76.9231% - 17.2308px), 0px calc(69.2308% - 12.3077px), 0px calc(61.5385% - 7.3846px), 0px calc(53.8462% - 2.4615px), 0px calc(46.1538% + 2.4615px), 0px calc(38.4615% + 7.3846px), 0px calc(30.7692% + 12.3077px), 0px calc(23.0769% + 17.2308px), 0px calc(15.3846% + 22.1538px), 0px calc(7.6923% + 27.0769px), 0px 32px);
+    min-width: 1em;
+    padding: 0 1em;
+
+    &--sm {
+        font-size: 12px;
+        height: calc(2em + 14px);
+    }
+
+    &--md {
+        font-size: 14px;
+        height: calc(2em + 16px);
+    }
+
+    &--lg {
+        font-size: 16px;
+        height: calc(2em + 18px);
+    }
+
+    &--look-contained {
+        background: var(--fun-bubble-color);
+        color: rgb(var(--uib-color-primary-foreground));
+
+    }
+
+    &--look-light {
+        background: color-mix(in srgb, var(--fun-bubble-color) 20%, rgb(var(--uib-color-background-darker)) 80%);
+        color: var(--fun-bubble-color),
+
+    }
+}
