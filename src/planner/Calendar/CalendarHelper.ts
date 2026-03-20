@@ -255,4 +255,19 @@ export class CalendarHelper {
 
 
     }
+
+    public static ClipAndSortEventsForMonth(events: CalendarEvent[], monthStart: Date, monthEnd: Date): CalendarEvent[] {
+        return events
+            .map(event => {
+                const clippedStart = event.startedOn < monthStart ? monthStart : event.startedOn;
+                const clippedEnd = event.finishedOn > monthEnd ? monthEnd : event.finishedOn;
+                return { ...event, startedOn: clippedStart, finishedOn: clippedEnd };
+            })
+            .filter(event => event.startedOn.getTime() <= event.finishedOn.getTime())
+            .sort((a, b) => {
+                const startDiff = a.startedOn.getTime() - b.startedOn.getTime();
+                if (startDiff !== 0) return startDiff;
+                return a.finishedOn.getTime() - b.finishedOn.getTime();
+            });
+    }
 }

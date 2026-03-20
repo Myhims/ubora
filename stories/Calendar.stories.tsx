@@ -31,7 +31,7 @@ const meta = {
       { startedOn: new Date(currentYear, currentMonth, 7, 10, 0, 0), finishedOn: new Date(currentYear, currentMonth, 7, 20, 0, 0), title: 'Rendez-vous', id: 'event-5' },
       { startedOn: new Date(currentYear, currentMonth, 5, 10, 0, 0), finishedOn: new Date(currentYear, currentMonth, 6, 20, 0, 0), title: 'Scrum', id: 'event-6' },
       { startedOn: new Date(currentYear, currentMonth, 8, 10, 0, 0), finishedOn: new Date(currentYear, currentMonth, 9, 20, 0, 0), title: 'My stuffs', id: 'event-7' },
-      { startedOn: new Date(currentYear, currentMonth - 1, 28, 10, 0, 0), finishedOn: new Date(currentYear, currentMonth, 2, 20, 0, 0), title: '2 months long', id: 'event-8' },
+      { startedOn: new Date(currentYear, currentMonth - 1, 28, 10, 0, 0), finishedOn: new Date(currentYear, currentMonth + 1, 2, 20, 0, 0), title: '2 months long', id: 'event-8' },
     ],
     i18n: {
       sunday: 'S',

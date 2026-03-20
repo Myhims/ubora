@@ -33,10 +33,33 @@ const CalendarMonth = ({
     const [eventsPortals, setEventsPortals] = useState<React.ReactPortal[]>([]);
     const [calendarEventsManaged, setCalendarEventsManaged] = useState<CalendarEvent[]>(CalendarHelper.FilterEventsForMonth(calendarEvents, startDate));
 
+    const monthStart = useMemo(() => {
+        return new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+    }, [startDate]);
+
+    const monthEnd = useMemo(() => {
+        return new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
+    }, [startDate]);
+
+    const toDayKey = useCallback((date?: Date | null) => {
+        if (!date) return '';
+        return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+    }, []);
+
+    const addDays = useCallback((date: Date, days: number) => {
+        const nextDate = new Date(date);
+        nextDate.setDate(nextDate.getDate() + days);
+        return nextDate;
+    }, []);
+
     useEffect(() => {
         const displayDays = CalendarHelper.generateCalendarDays(startDate.getFullYear(), startDate.getMonth(), startDayOfWeek);
         setCalendarInDays(displayDays);
-    }, [])
+    }, [startDate, startDayOfWeek]);
+
+    useEffect(() => {
+        setCalendarEventsManaged(CalendarHelper.FilterEventsForMonth(calendarEvents, startDate));
+    }, [calendarEvents, startDate]);
 
     const uniqueCalendarId = useMemo(() => {
         return uuidv4();
@@ -52,12 +75,12 @@ const CalendarMonth = ({
             })}
         </div>
 
-    }, [startDayOfWeek])
+    }, [startDayOfWeek, i18n])
 
     /* Drag and Drop */
     const handleDragStart = useCallback((e: React.DragEvent<HTMLDivElement>, event: CalendarEvent) => {
         e.dataTransfer.setData('text/plain', JSON.stringify({ event, type: 'drag' } as DragAndDropElement));
-    }, [calendarEventsManaged]);
+    }, []);
 
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>, day: CalendarDay) => {
         e.preventDefault();
@@ -71,7 +94,6 @@ const CalendarMonth = ({
 
     const handleDropResize = useCallback((e: React.DragEvent<HTMLDivElement>, day: CalendarDay) => {
         e.preventDefault();
-
         dragAndDropDraw(e, day);
     }, [calendarEventsManaged]);
 
@@ -82,13 +104,17 @@ const CalendarMonth = ({
         const data = JSON.parse(e.dataTransfer.getData('text/plain')) as DragAndDropElement;
 
         switch (data.type) {
-            case 'drag': newEvents = CalendarHelper.MoveEventOn(data.event, day, calendarEventsManaged);
+            case 'drag':
+                newEvents = CalendarHelper.MoveEventOn(data.event, day, calendarEventsManaged);
                 break;
-            case "resize-start": newEvents = CalendarHelper.ResizeEventOnFromStart(data.event, day, calendarEventsManaged);
+            case "resize-start":
+                newEvents = CalendarHelper.ResizeEventOnFromStart(data.event, day, calendarEventsManaged);
                 break;
-            case "resize-end": newEvents = CalendarHelper.ResizeEventOnFromEnd(data.event, day, calendarEventsManaged);
+            case "resize-end":
+                newEvents = CalendarHelper.ResizeEventOnFromEnd(data.event, day, calendarEventsManaged);
                 break;
         }
+
         setCalendarEventsManaged(newEvents);
         handleDragLeave(e);
     }, [calendarEventsManaged]);
@@ -96,75 +122,89 @@ const CalendarMonth = ({
     /* Resize */
     const handleResizeStart = useCallback((e: React.DragEvent<HTMLDivElement>, event: CalendarEvent) => {
         e.dataTransfer.setData('text/plain', JSON.stringify({ event, type: 'resize-start' } as DragAndDropElement));
-    }, [calendarEventsManaged]);
+    }, []);
 
     const handleResizeEnd = useCallback((e: React.DragEvent<HTMLDivElement>, event: CalendarEvent) => {
         e.dataTransfer.setData('text/plain', JSON.stringify({ event, type: 'resize-end' } as DragAndDropElement));
-    }, [calendarEventsManaged]);
+    }, []);
 
     /* Events display */
-    const monthEvents = (day: CalendarDay, eventsAmountByDay: { day: Number, amount: number }[], maxHeight: number | undefined) => {
-        let events: ReactNode[] = [];
+    const monthEvents = (
+        day: CalendarDay,
+        eventsAmountByDay: { dayKey: string, amount: number }[],
+        maxHeight: number | undefined
+    ) => {
+        const events: ReactNode[] = [];
 
-        if (calendarInDays === undefined)
+        if (calendarInDays === undefined || day.date === null || !day.isCurrentMonth)
             return events;
 
-        const sortedEvents = [...calendarEventsManaged].sort((a, b) => {
-            const startedDiff = a.startedOn.getTime() - b.startedOn.getTime();
-            return startedDiff !== 0 ? startedDiff : a.finishedOn.getTime() - b.finishedOn.getTime();
-        });
+        const sortedEvents = CalendarHelper.ClipAndSortEventsForMonth(calendarEventsManaged, monthStart, monthEnd);
 
         let moreEvents = 0;
-        for (let event of sortedEvents) {
+
+        for (const event of sortedEvents) {
             const segments = CalendarHelper.getEventSegments(event, calendarInDays);
-            for (let daySeg of segments) {
-                if (daySeg.start === day.date?.getDate() && daySeg.end !== null) {
-                    const size = (daySeg.end - daySeg.start + 1);
+
+            for (const daySeg of segments) {
+                if (daySeg.start === day.date.getDate() && daySeg.end !== null) {
+                    const size = daySeg.end - daySeg.start + 1;
 
                     let minimalDayAmount = 1;
+
                     for (let i = 0; i < size; i++) {
-                        const dayAmount = eventsAmountByDay.find(d => d.day === ((day.date?.getDate() ?? 0) + i));
+                        const currentDate = addDays(day.date, i);
+                        const currentDayKey = toDayKey(currentDate);
+                        const dayAmount = eventsAmountByDay.find(d => d.dayKey === currentDayKey);
+
                         if (dayAmount) {
                             dayAmount.amount++;
                             minimalDayAmount = dayAmount.amount;
-                        }
-                        else {
-                            //get the amount from the actual delta
-                            eventsAmountByDay.push({ day: day.date?.getDate() + i, amount: minimalDayAmount })
+                        } else {
+                            eventsAmountByDay.push({ dayKey: currentDayKey, amount: minimalDayAmount });
                         }
                     }
 
-                    const eventsOfDay = eventsAmountByDay.find(d => d.day === day.date?.getDate())?.amount ?? 0;
+                    const eventsOfDay = eventsAmountByDay.find(d => d.dayKey === toDayKey(day.date))?.amount ?? 0;
+
+                    // Récupère l'événement original pour les dates du tooltip
+                    const originalEvent = calendarEventsManaged.find(e => e.id === event.id) ?? event;
 
                     if (maxHeight && ((eventsOfDay + 1) * 25) < maxHeight) {
-                        events.push(<div
-                            key={`event-${event.title}`}
-                            style={{ width: `calc(${size * 100}% - 4px)`, top: `${(eventsOfDay - 1) * 25}px` }}
-                            className={s['calendar-month__event']}
-                        >
-                            <div className={s['calendar-month__event__resizer-left']}
-                                draggable onDragStart={(e) => handleResizeStart(e, event)}
-                            ></div>
-                            <div className={s['calendar-month__event__content']}
-                                draggable
-                                onDragStart={(e) => handleDragStart(e, event)}
+                        events.push(
+                            <div
+                                key={`event-${event.title}-${event.startedOn.toISOString()}-${event.finishedOn.toISOString()}`}
+                                style={{ width: `calc(${size * 100}% - 4px)`, top: `${(eventsOfDay - 1) * 25}px` }}
+                                className={s['calendar-month__event']}
                             >
-                                <Tooltip title={<>
-                                    {event.title}
-                                    <br />
-                                    [{`${DatesHelper.toShortLocale(event.startedOn)} ➡️ ${DatesHelper.toShortLocale(event.finishedOn)}]`}
-                                </>}>
-                                    <div>
-                                        {event.title}
-                                    </div>
-                                </Tooltip>
+                                <div
+                                    className={s['calendar-month__event__resizer-left']}
+                                    draggable
+                                    onDragStart={(e) => handleResizeStart(e, originalEvent)}
+                                ></div>
+
+                                <div
+                                    className={s['calendar-month__event__content']}
+                                    draggable
+                                    onDragStart={(e) => handleDragStart(e, originalEvent)}
+                                >
+                                    <Tooltip title={<>
+                                        {originalEvent.title}
+                                        <br />
+                                        [{`${DatesHelper.toShortLocale(originalEvent.startedOn)} ➡️ ${DatesHelper.toShortLocale(originalEvent.finishedOn)}`}]
+                                    </>}>
+                                        <div>{originalEvent.title}</div>
+                                    </Tooltip>
+                                </div>
+
+                                <div
+                                    className={s['calendar-month__event__resizer-right']}
+                                    draggable
+                                    onDragStart={(e) => handleResizeEnd(e, originalEvent)}
+                                ></div>
                             </div>
-                            <div className={s['calendar-month__event__resizer-right']}
-                                draggable onDragStart={(e) => handleResizeEnd(e, event)}
-                            ></div>
-                        </div>);
-                    }
-                    else {
+                        );
+                    } else {
                         moreEvents++;
                     }
                 }
@@ -172,7 +212,14 @@ const CalendarMonth = ({
         }
 
         if (moreEvents > 0) {
-            events.push(<span className={s["calendar-month__week-line__single-day__more-event"]}>+{moreEvents}</span>)
+            events.push(
+                <span
+                    key={`more-${toDayKey(day.date)}`}
+                    className={s["calendar-month__week-line__single-day__more-event"]}
+                >
+                    +{moreEvents}
+                </span>
+            );
         }
 
         return events;
@@ -180,54 +227,55 @@ const CalendarMonth = ({
 
     const showCalendarDays = useMemo(() => {
         const today = new Date();
+        const todayKey = toDayKey(today);
 
         return calendarInDays?.map((weeks, i) => {
             return <div key={`day-${i}`}
                 className={s["calendar-month__week-line"]}
             >
                 {weeks.map((day, index) => {
-                    //search events starting today
                     const dandProps = day.isCurrentMonth ? {
                         onDragOver: (e: React.DragEvent<HTMLDivElement>) => handleDragOver(e, day),
                         onDrop: (e: React.DragEvent<HTMLDivElement>) => handleDropResize(e, day)
                     } : {}
 
                     return <div
-                        data-guid={`calendar-month-${uniqueCalendarId}-day-${day.date?.getDate()}`}
-                        key={`day-${day.date}-${index}`}
+                        data-guid={`calendar-month-${uniqueCalendarId}-day-${toDayKey(day.date)}`}
+                        key={`day-${toDayKey(day.date)}-${index}`}
                         onDragLeave={handleDragLeave}
                         {...dandProps}
                         className={clsx(
                             s["calendar-month__week-line__single-day"],
                             day.isCurrentMonth ? '' : s["calendar-month__week-line__single-day--state-disabled"],
-                            day.date?.getDate() === today.getDate() ? s["calendar-month__week-line__single-day--state-today"] : ''
+                            toDayKey(day.date) === todayKey ? s["calendar-month__week-line__single-day--state-today"] : ''
                         )}>
                         {day.date?.getDate()}
                     </div>
                 })}
             </div>
         })
-    }, [calendarInDays, calendarEventsManaged]);
+    }, [calendarInDays, calendarEventsManaged, handleDropResize, toDayKey, uniqueCalendarId]);
 
     const appendEvents = () => {
-        let eventsAmountByDay: { day: Number, amount: number }[] = [];
+        const eventsAmountByDay: { dayKey: string, amount: number }[] = [];
         const newPortals: React.ReactPortal[] = [];
 
-        calendarInDays?.map((weeks, i) => {
-            weeks.filter(d => d.date !== null).map((day, index) => {
-                //search events starting today
-                const dataGuid = `calendar-month-${uniqueCalendarId}-day-${day.date?.getDate()}`;
-                const dayCase = document.querySelectorAll(`[data-guid="${dataGuid}"]`);
-                const events = monthEvents(day, eventsAmountByDay, dayCase[0]?.clientHeight);
+        calendarInDays?.forEach((weeks) => {
+            weeks
+                .filter(d => d.date !== null && d.isCurrentMonth)
+                .forEach((day) => {
+                    const dataGuid = `calendar-month-${uniqueCalendarId}-day-${toDayKey(day.date)}`;
+                    const dayCase = document.querySelector(`[data-guid="${dataGuid}"]`);
+                    const events = monthEvents(day, eventsAmountByDay, (dayCase as HTMLDivElement | null)?.clientHeight);
 
-                if (dayCase.length && dayCase[0])
-                    newPortals.push(ReactDOM.createPortal(events, dayCase[0]));
-            })
-        })
+                    if (dayCase) {
+                        newPortals.push(ReactDOM.createPortal(events, dayCase));
+                    }
+                });
+        });
 
         setEventsPortals(newPortals);
     }
-
 
     useLayoutEffect(() => {
         const handleResize = () => {
@@ -241,8 +289,6 @@ const CalendarMonth = ({
             window.removeEventListener('resize', handleResize);
         };
     }, [showCalendarDays, calendarEventsManaged]);
-
-
 
     return <>
         {headerDays}
