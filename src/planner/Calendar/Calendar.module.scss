@@ -3,7 +3,7 @@
 .calendar {
     margin-left: 1px;
     margin-top: 1px;
-    max-height: 100vh;
+    max-height: 100%;
     @include theme.default-component-font;
 
     &__mode-selector {

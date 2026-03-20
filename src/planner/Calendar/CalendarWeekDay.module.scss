@@ -1,0 +1,100 @@
+.calendar-week-day {
+    position: relative;
+    background-color: rgba(var(--uib-color-border), .1);
+    border-right: 1px solid rgb(var(--uib-color-border));
+    box-sizing: border-box;
+    transition: background-color .3s;
+
+    &--state-today {
+        background-color: rgba(var(--uib-color-primary), .08);
+    }
+
+    &--state-drag-over {
+        background-color: rgba(var(--uib-color-primary), 0.2);
+    }
+
+    &__hour-slot {
+        border-bottom: 1px solid rgba(var(--uib-color-border), .4);
+        box-sizing: border-box;
+        transition: opacity .2s;
+
+        &--off-range {
+            opacity: .4;
+            background-color: rgba(var(--uib-color-border), .1);
+            border-color: rgba(var(--uib-color-border), .2);
+        }
+
+        &:last-child {
+            border-bottom: none;
+        }
+    }
+
+    &__more-event {
+        position: absolute;
+        bottom: .2em;
+        right: .2em;
+        background-color: rgba(var(--uib-color-primary), 0.8);
+        color: white;
+        border-radius: var(--uib-material-border-radius-small);
+        padding: .25em;
+        font-size: .7em;
+    }
+
+    &__timed-event {
+        position: absolute;
+        background-color: var(--color-primary, #6366f1);
+        color: var(--color-primary-contrast, #fff);
+        border-radius: 4px;
+        overflow: hidden;
+        cursor: grab;
+        z-index: 1;
+        box-sizing: border-box;
+
+        &:active {
+            cursor: grabbing;
+        }
+
+        &__content {
+            display: flex;
+            flex-direction: column;
+            padding: 2px 4px;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        &__time {
+            font-size: 0.7rem;
+            opacity: 0.85;
+            white-space: nowrap;
+        }
+
+        &--resizing {
+            opacity: 0.85;
+            outline: 2px dashed var(--color-primary, #4a90d9);
+        }
+
+        &__resize-handle--top,
+        &__resize-handle--bottom {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 6px;
+            cursor: ns-resize;
+            z-index: 10;
+
+            &:hover {
+                background-color: rgba(255, 255, 255, 0.35);
+            }
+        }
+
+        &__resize-handle--top {
+            top: 0;
+            border-radius: 4px 4px 0 0;
+        }
+
+        &__resize-handle--bottom {
+            bottom: 0;
+            border-radius: 0 0 4px 4px;
+        }
+    }
+}

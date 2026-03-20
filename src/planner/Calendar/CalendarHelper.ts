@@ -270,4 +270,29 @@ export class CalendarHelper {
                 return a.finishedOn.getTime() - b.finishedOn.getTime();
             });
     }
+
+    public static getWeekStart(date: Date, startDayOfWeek: WeekDay): Date {
+        const day = date.getDay();
+        const diff = (day - startDayOfWeek + 7) % 7;
+        const start = new Date(date);
+        start.setDate(date.getDate() - diff);
+        start.setHours(0, 0, 0, 0);
+        return start;
+    }
+
+    public static getWeekEnd(date: Date, startDayOfWeek: WeekDay): Date {
+        const start = CalendarHelper.getWeekStart(date, startDayOfWeek);
+        const end = new Date(start);
+        end.setDate(start.getDate() + 6);
+        end.setHours(23, 59, 59, 999);
+        return end;
+    }
+
+    public static FilterEventsForWeek(events: CalendarEvent[], date: Date, startDayOfWeek: WeekDay): CalendarEvent[] {
+        const weekStart = CalendarHelper.getWeekStart(date, startDayOfWeek);
+        const weekEnd = CalendarHelper.getWeekEnd(date, startDayOfWeek);
+        return events.filter(e =>
+            e.startedOn <= weekEnd && e.finishedOn >= weekStart
+        );
+    }
 }
