@@ -1,5 +1,5 @@
 import clsx from "clsx"
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from "react"
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import ReactDOM from 'react-dom'
 import { v4 as uuidv4 } from 'uuid'
 import { DatesHelper } from "../../helpers/DatesHelper"
@@ -32,6 +32,10 @@ const CalendarMonth = ({
     const [calendarInDays, setCalendarInDays] = useState<CalendarDay[][]>();
     const [eventsPortals, setEventsPortals] = useState<React.ReactPortal[]>([]);
     const [calendarEventsManaged, setCalendarEventsManaged] = useState<CalendarEvent[]>(CalendarHelper.FilterEventsForMonth(calendarEvents, startDate));
+    const [dragPreview, setDragPreview] = useState<CalendarEvent[] | null>(null);
+    const dragDataRef = useRef<DragAndDropElement | null>(null);
+
+    const displayEvents = dragPreview ?? calendarEventsManaged;
 
     const monthStart = useMemo(() => {
         return new Date(startDate.getFullYear(), startDate.getMonth(), 1);
@@ -74,23 +78,50 @@ const CalendarMonth = ({
                 </div>
             })}
         </div>
-
     }, [startDayOfWeek, i18n])
 
     /* Drag and Drop */
     const handleDragStart = useCallback((e: React.DragEvent<HTMLDivElement>, event: CalendarEvent) => {
-        e.dataTransfer.setData('text/plain', JSON.stringify({ event, type: 'drag' } as DragAndDropElement));
+        const data: DragAndDropElement = { event, type: 'drag' };
+        e.dataTransfer.setData('text/plain', JSON.stringify(data));
+        dragDataRef.current = data;
     }, []);
 
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>, day: CalendarDay) => {
         e.preventDefault();
         e.currentTarget.classList.add(s['calendar-month__week-line__single-day--state-drag-over'] ?? '');
+
+        if (!dragDataRef.current || !day.date) return;
+
+        const data = dragDataRef.current;
+        let previewEvents: CalendarEvent[];
+
+        switch (data.type) {
+            case 'drag':
+                previewEvents = CalendarHelper.MoveEventOn(data.event, day, calendarEventsManaged);
+                break;
+            case 'resize-start':
+                previewEvents = CalendarHelper.ResizeEventOnFromStart(data.event, day, calendarEventsManaged);
+                break;
+            case 'resize-end':
+                previewEvents = CalendarHelper.ResizeEventOnFromEnd(data.event, day, calendarEventsManaged);
+                break;
+            default:
+                return;
+        }
+
+        setDragPreview(previewEvents);
     };
 
     const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         e.currentTarget.classList.remove(s['calendar-month__week-line__single-day--state-drag-over'] ?? '');
     };
+
+    const handleDragEnd = useCallback(() => {
+        dragDataRef.current = null;
+        setDragPreview(null);
+    }, []);
 
     const handleDropResize = useCallback((e: React.DragEvent<HTMLDivElement>, day: CalendarDay) => {
         e.preventDefault();
@@ -116,16 +147,22 @@ const CalendarMonth = ({
         }
 
         setCalendarEventsManaged(newEvents);
+        setDragPreview(null);
+        dragDataRef.current = null;
         handleDragLeave(e);
     }, [calendarEventsManaged]);
 
     /* Resize */
     const handleResizeStart = useCallback((e: React.DragEvent<HTMLDivElement>, event: CalendarEvent) => {
-        e.dataTransfer.setData('text/plain', JSON.stringify({ event, type: 'resize-start' } as DragAndDropElement));
+        const data: DragAndDropElement = { event, type: 'resize-start' };
+        e.dataTransfer.setData('text/plain', JSON.stringify(data));
+        dragDataRef.current = data;
     }, []);
 
     const handleResizeEnd = useCallback((e: React.DragEvent<HTMLDivElement>, event: CalendarEvent) => {
-        e.dataTransfer.setData('text/plain', JSON.stringify({ event, type: 'resize-end' } as DragAndDropElement));
+        const data: DragAndDropElement = { event, type: 'resize-end' };
+        e.dataTransfer.setData('text/plain', JSON.stringify(data));
+        dragDataRef.current = data;
     }, []);
 
     /* Events display */
@@ -139,7 +176,7 @@ const CalendarMonth = ({
         if (calendarInDays === undefined || day.date === null || !day.isCurrentMonth)
             return events;
 
-        const sortedEvents = CalendarHelper.ClipAndSortEventsForMonth(calendarEventsManaged, monthStart, monthEnd);
+        const sortedEvents = CalendarHelper.ClipAndSortEventsForMonth(displayEvents, monthStart, monthEnd);
 
         let moreEvents = 0;
 
@@ -167,26 +204,31 @@ const CalendarMonth = ({
 
                     const eventsOfDay = eventsAmountByDay.find(d => d.dayKey === toDayKey(day.date))?.amount ?? 0;
 
-                    // Récupère l'événement original pour les dates du tooltip
                     const originalEvent = calendarEventsManaged.find(e => e.id === event.id) ?? event;
+                    const isDragging = dragDataRef.current?.event.id === event.id;
 
                     if (maxHeight && ((eventsOfDay + 1) * 25) < maxHeight) {
                         events.push(
                             <div
                                 key={`event-${event.title}-${event.startedOn.toISOString()}-${event.finishedOn.toISOString()}`}
                                 style={{ width: `calc(${size * 100}% - 4px)`, top: `${(eventsOfDay - 1) * 25}px` }}
-                                className={s['calendar-month__event']}
+                                className={clsx(
+                                    s['calendar-month__event'],
+                                    isDragging ? s['calendar-month__event--dragging'] : ''
+                                )}
                             >
                                 <div
                                     className={s['calendar-month__event__resizer-left']}
                                     draggable
                                     onDragStart={(e) => handleResizeStart(e, originalEvent)}
-                                ></div>
+                                    onDragEnd={handleDragEnd}
+                                />
 
                                 <div
                                     className={s['calendar-month__event__content']}
                                     draggable
                                     onDragStart={(e) => handleDragStart(e, originalEvent)}
+                                    onDragEnd={handleDragEnd}
                                 >
                                     <Tooltip title={<>
                                         {originalEvent.title}
@@ -201,7 +243,8 @@ const CalendarMonth = ({
                                     className={s['calendar-month__event__resizer-right']}
                                     draggable
                                     onDragStart={(e) => handleResizeEnd(e, originalEvent)}
-                                ></div>
+                                    onDragEnd={handleDragEnd}
+                                />
                             </div>
                         );
                     } else {
@@ -288,7 +331,7 @@ const CalendarMonth = ({
         return () => {
             window.removeEventListener('resize', handleResize);
         };
-    }, [showCalendarDays, calendarEventsManaged]);
+    }, [showCalendarDays, calendarEventsManaged, dragPreview]);
 
     return <>
         {headerDays}

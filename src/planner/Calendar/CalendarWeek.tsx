@@ -17,9 +17,7 @@ export interface ICalendarWeekProps {
     startDate?: Date
     calendarEvents?: CalendarEvent[]
     i18n: MonthCalendarI18n
-    /** Heure de début de la journée affichée (0-23), défaut: 0 */
     dayStartHour?: number
-    /** Heure de fin de la journée affichée (1-24), défaut: 24 */
     dayEndHour?: number
 }
 
@@ -45,7 +43,11 @@ const CalendarWeek = ({
         CalendarHelper.FilterEventsForWeek(calendarEvents, startDate, startDayOfWeek)
     );
     const [dayColumnWidth, setDayColumnWidth] = useState(0);
+    const [dragPreview, setDragPreview] = useState<CalendarEvent[] | null>(null);
+    const dragDataRef = useRef<DragAndDropElement | null>(null);
     const gridRef = useRef<HTMLDivElement>(null);
+
+    const displayAllDayEvents = dragPreview ?? calendarEventsManaged;
 
     const weekStart = useMemo(() => CalendarHelper.getWeekStart(startDate, startDayOfWeek), [startDate, startDayOfWeek]);
     const weekEnd = useMemo(() => CalendarHelper.getWeekEnd(startDate, startDayOfWeek), [startDate, startDayOfWeek]);
@@ -102,12 +104,21 @@ const CalendarWeek = ({
         const allDay: CalendarEvent[] = [];
         const timed: CalendarEvent[] = [];
         calendarEventsManaged.forEach(event => {
-            const diffMs = new Date(event.finishedOn).getTime() - new Date(event.startedOn).getTime();
-            if (diffMs >= 24 * 60 * 60 * 1000) allDay.push(event);
-            else timed.push(event);
+            const start = new Date(event.startedOn);
+            const end = new Date(event.finishedOn);
+            const fitsInOneDay = weekDays.some(day => {
+                if (!day.date) return false;
+                const dayStart = new Date(day.date);
+                dayStart.setHours(0, 0, 0, 0);
+                const dayEnd = new Date(day.date);
+                dayEnd.setHours(23, 59, 59, 999);
+                return start >= dayStart && end <= dayEnd;
+            });
+            if (fitsInOneDay) timed.push(event);
+            else allDay.push(event);
         });
         return { allDayEvents: allDay, timedEvents: timed };
-    }, [calendarEventsManaged]);
+    }, [calendarEventsManaged, weekDays]);
 
     const headerDays = useMemo(() => {
         const dayLabels = CalendarHelper.getWeekDays(startDayOfWeek, i18n);
@@ -126,12 +137,35 @@ const CalendarWeek = ({
 
     /* Drag and Drop */
     const handleDragStart = useCallback((e: React.DragEvent<HTMLDivElement>, event: CalendarEvent) => {
-        e.dataTransfer.setData('text/plain', JSON.stringify({ event, type: 'drag' } as DragAndDropElement));
+        const data: DragAndDropElement = { event, type: 'drag' };
+        e.dataTransfer.setData('text/plain', JSON.stringify(data));
+        dragDataRef.current = data;
     }, []);
 
-    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>, day: CalendarDay) => {
         e.preventDefault();
         e.currentTarget.classList.add(s['calendar-week__day--state-drag-over'] ?? '');
+
+        if (!dragDataRef.current || !day.date) return;
+
+        const data = dragDataRef.current;
+        let previewEvents: CalendarEvent[];
+
+        switch (data.type) {
+            case 'drag':
+                previewEvents = CalendarHelper.MoveEventOn(data.event, day, calendarEventsManaged);
+                break;
+            case 'resize-start':
+                previewEvents = CalendarHelper.ResizeEventOnFromStart(data.event, day, calendarEventsManaged);
+                break;
+            case 'resize-end':
+                previewEvents = CalendarHelper.ResizeEventOnFromEnd(data.event, day, calendarEventsManaged);
+                break;
+            default:
+                return;
+        }
+
+        setDragPreview(previewEvents);
     };
 
     const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
@@ -139,12 +173,10 @@ const CalendarWeek = ({
         e.currentTarget.classList.remove(s['calendar-week__day--state-drag-over'] ?? '');
     };
 
-    // ✅ Calcule l'heure cible à partir de la position Y du drop dans la cellule
-    const getHourFromDropEvent = (e: React.DragEvent<HTMLDivElement>): number => {
-        const rect = e.currentTarget.getBoundingClientRect();
-        const y = e.clientY - rect.top;
-        return Math.floor(y / HOUR_HEIGHT_PX);
-    };
+    const handleDragEnd = useCallback(() => {
+        dragDataRef.current = null;
+        setDragPreview(null);
+    }, []);
 
     const handleDropTimed = useCallback((eventId: string, newStart: Date, newEnd: Date) => {
         setCalendarEventsManaged(prev =>
@@ -158,13 +190,13 @@ const CalendarWeek = ({
 
     const handleDropResize = useCallback((e: React.DragEvent<HTMLDivElement>, day: CalendarDay) => {
         e.preventDefault();
-        e.stopPropagation(); // ✅ empêche la propagation
+        e.stopPropagation();
         handleDragLeave(e);
 
         const data = JSON.parse(e.dataTransfer.getData('text/plain')) as DragAndDropElement;
 
         const diffMs = new Date(data.event.finishedOn).getTime() - new Date(data.event.startedOn).getTime();
-        if (data.type === 'drag' && diffMs < 24 * 60 * 60 * 1000) return; // géré par handleDropTimed
+        if (data.type === 'drag' && diffMs < 24 * 60 * 60 * 1000) return;
 
         setCalendarEventsManaged(prev => {
             let newEvents = [...prev];
@@ -181,14 +213,21 @@ const CalendarWeek = ({
             }
             return newEvents;
         });
-    }, []);
+
+        setDragPreview(null);
+        dragDataRef.current = null;
+    }, [calendarEventsManaged]);
 
     const handleResizeStart = useCallback((e: React.DragEvent<HTMLDivElement>, event: CalendarEvent) => {
-        e.dataTransfer.setData('text/plain', JSON.stringify({ event, type: 'resize-start' } as DragAndDropElement));
+        const data: DragAndDropElement = { event, type: 'resize-start' };
+        e.dataTransfer.setData('text/plain', JSON.stringify(data));
+        dragDataRef.current = data;
     }, []);
 
     const handleResizeEnd = useCallback((e: React.DragEvent<HTMLDivElement>, event: CalendarEvent) => {
-        e.dataTransfer.setData('text/plain', JSON.stringify({ event, type: 'resize-end' } as DragAndDropElement));
+        const data: DragAndDropElement = { event, type: 'resize-end' };
+        e.dataTransfer.setData('text/plain', JSON.stringify(data));
+        dragDataRef.current = data;
     }, []);
 
     /* Calcule les colonnes pour les events qui se chevauchent */
@@ -266,7 +305,20 @@ const CalendarWeek = ({
         const events: ReactNode[] = [];
         if (!day.date) return events;
 
-        const sortedEvents = CalendarHelper.ClipAndSortEventsForMonth(allDayEvents, weekStart, weekEnd);
+        const eventsToDisplay = (dragPreview ?? calendarEventsManaged).filter(event => {
+            const start = new Date(event.startedOn);
+            const end = new Date(event.finishedOn);
+            return !weekDays.some(day => {
+                if (!day.date) return false;
+                const dayStart = new Date(day.date);
+                dayStart.setHours(0, 0, 0, 0);
+                const dayEnd = new Date(day.date);
+                dayEnd.setHours(23, 59, 59, 999);
+                return start >= dayStart && end <= dayEnd;
+            });
+        });
+
+        const sortedEvents = CalendarHelper.ClipAndSortEventsForMonth(eventsToDisplay, weekStart, weekEnd);
         let moreEvents = 0;
 
         for (const event of sortedEvents) {
@@ -289,16 +341,30 @@ const CalendarWeek = ({
 
             const eventsOfDay = eventsAmountByDay.find(d => d.dayKey === toDayKey(day.date))?.amount ?? 0;
             const originalEvent = calendarEventsManaged.find(e => e.id === event.id) ?? event;
+            const isDragging = dragDataRef.current?.event.id === event.id;
 
             if (!maxHeight || ((eventsOfDay + 1) * 25) < maxHeight) {
                 events.push(
                     <div
                         key={`allday-event-${event.id}-${event.startedOn.toISOString()}`}
                         style={{ width: `calc(${size * 100}% - 4px)`, top: `${(eventsOfDay - 1) * 25}px` }}
-                        className={s['calendar-week__event']}
+                        className={clsx(
+                            s['calendar-week__event'],
+                            isDragging ? s['calendar-week__event--dragging'] : ''
+                        )}
                     >
-                        <div className={s['calendar-week__event__resizer-left']} draggable onDragStart={(e) => handleResizeStart(e, originalEvent)} />
-                        <div className={s['calendar-week__event__content']} draggable onDragStart={(e) => handleDragStart(e, originalEvent)}>
+                        <div
+                            className={s['calendar-week__event__resizer-left']}
+                            draggable
+                            onDragStart={(e) => handleResizeStart(e, originalEvent)}
+                            onDragEnd={handleDragEnd}
+                        />
+                        <div
+                            className={s['calendar-week__event__content']}
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, originalEvent)}
+                            onDragEnd={handleDragEnd}
+                        >
                             <Tooltip title={<>
                                 {originalEvent.title}<br />
                                 [{`${DatesHelper.toShortLocale(originalEvent.startedOn)} ➡️ ${DatesHelper.toShortLocale(originalEvent.finishedOn)}`}]
@@ -306,7 +372,12 @@ const CalendarWeek = ({
                                 <div>{originalEvent.title}</div>
                             </Tooltip>
                         </div>
-                        <div className={s['calendar-week__event__resizer-right']} draggable onDragStart={(e) => handleResizeEnd(e, originalEvent)} />
+                        <div
+                            className={s['calendar-week__event__resizer-right']}
+                            draggable
+                            onDragStart={(e) => handleResizeEnd(e, originalEvent)}
+                            onDragEnd={handleDragEnd}
+                        />
                     </div>
                 );
             } else {
@@ -335,7 +406,7 @@ const CalendarWeek = ({
                     data-guid={`calendar-week-${uniqueCalendarId}-allday-${toDayKey(day.date)}`}
                     key={`allday-${toDayKey(day.date)}-${index}`}
                     onDragLeave={handleDragLeave}
-                    onDragOver={handleDragOver}
+                    onDragOver={(e) => handleDragOver(e, day)}
                     onDrop={(e) => handleDropResize(e, day)}
                     className={s['calendar-week__allday-row__day']}
                 />
@@ -397,13 +468,13 @@ const CalendarWeek = ({
         });
 
         setEventsPortals(newPortals);
-    }, [weekDays, allDayEvents, uniqueCalendarId, toDayKey]);
+    }, [weekDays, allDayEvents, displayAllDayEvents, uniqueCalendarId, toDayKey]);
 
     useLayoutEffect(() => {
         appendAllDayEvents();
         window.addEventListener('resize', appendAllDayEvents);
         return () => window.removeEventListener('resize', appendAllDayEvents);
-    }, [appendAllDayEvents]);
+    }, [appendAllDayEvents, dragPreview]);
 
     const scrollRef = useCallback((node: HTMLDivElement | null) => {
         if (node) node.scrollTop = dayStartHour * HOUR_HEIGHT_PX;

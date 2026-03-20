@@ -85,7 +85,7 @@ $hour-height: 60px;
     &__scroll {
         overflow-y: auto;
         flex: 1;
-        max-height: calc(100vh - 300px);
+        max-height: calc(100vh - 200px);
     }
 
     /* Grille horaire */
@@ -191,6 +191,11 @@ $hour-height: 60px;
             overflow: hidden;
             text-overflow: ellipsis;
             font-size: .8em;
+        }
+
+        &--dragging {
+            opacity: 0.4;
+            outline: 2px dashed rgba(var(--uib-color-primary), 0.6);
         }
     }
 
